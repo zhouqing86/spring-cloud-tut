@@ -1,22 +1,44 @@
 package com.example;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Controller;
+import org.springframework.stereotype.Repository;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.PostConstruct;
+import javax.persistence.*;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @SpringBootApplication
 public class DemoApplication {
 
+	@Autowired
+	private TeamDao teamDao;
+
 	public static void main(String[] args) {
 		SpringApplication.run(DemoApplication.class, args);
+	}
+
+	@PostConstruct
+	public void init() {
+		Set<Player> players = new HashSet<>();
+		players.add(new Player("Name 1", "Position 1"));
+		players.add(new Player("Name 2", "Position 2"));
+		players.add(new Player("Name 3", "Position 3"));
+
+		Team team = new Team("Team1", "Xi'an", players);
+
+		teamDao.save(team);
 	}
 
 }
@@ -30,11 +52,19 @@ class HelloController {
 	}
 }
 
+@Entity
 class Player {
+
+	@Id @GeneratedValue
+	private Long id;
 
 	private String name;
 
 	private String position;
+
+	public Player() {
+		super();
+	}
 
 	public Player(String name, String position) {
 		this.name = name;
@@ -59,11 +89,18 @@ class Player {
 }
 
 @XmlRootElement
+@Entity
 class Team {
+
+	@Id @GeneratedValue
+	private  Long Id;
+
 	private String name;
 
 	private String location;
 
+	@OneToMany(cascade = CascadeType.ALL)
+	@JoinColumn(name = "teamId")
 	private Set<Player> players;
 
 	public Team(){
@@ -74,6 +111,14 @@ class Team {
 		this.name = name;
 		this.location = location;
 		this.players = players;
+	}
+
+	public Long getId() {
+		return Id;
+	}
+
+	public void setId(Long id) {
+		Id = id;
 	}
 
 	public String getName() {
@@ -121,4 +166,23 @@ class JsonController {
 	public Team json() {
 		return team;
 	}
+}
+
+@RestController
+class JpaController {
+
+	@Autowired
+	private TeamDao teamDao;
+
+	@RequestMapping("/team/{name}")
+	public Team findTeamByName(@PathVariable("name") String name) {
+		return teamDao.findByName(name);
+	}
+}
+
+@Repository
+interface TeamDao extends CrudRepository<Team, Long> {
+	List<Team> findAll();
+
+	Team findByName(String name);
 }
