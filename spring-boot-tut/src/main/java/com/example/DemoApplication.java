@@ -5,8 +5,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.PostConstruct;
+import javax.xml.bind.annotation.XmlRootElement;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -56,12 +58,17 @@ class Player {
 	}
 }
 
+@XmlRootElement
 class Team {
 	private String name;
 
 	private String location;
 
 	private Set<Player> players;
+
+	public Team(){
+		super();
+	}
 
 	public Team(String name, String location, Set<Player> players) {
 		this.name = name;
@@ -95,7 +102,7 @@ class Team {
 	}
 }
 
-@Controller
+@RestController
 class JsonController {
 
 	private Team team;
@@ -111,8 +118,7 @@ class JsonController {
 	}
 
 	@RequestMapping("/json")
-	@ResponseBody
-	public  Team json() {
+	public Team json() {
 		return team;
 	}
 }
